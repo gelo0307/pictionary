@@ -1,0 +1,138 @@
+<html>
+
+<head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-76017195-3"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'UA-76017195-3');
+    </script>
+
+    <title>Play Pictionary</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="../css/index.css">
+    <link rel="stylesheet" type="text/css" href="../css/stepper.css">
+</head>
+
+<body>
+    <div class="background">
+        <div>
+        </div>
+        <div class="form-box">
+            <div class="button-box">
+                <div id="btn"></div>
+                <button type="button" class="toggle-btn" onclick="create()">Create</button>
+                <button type="button" class="toggle-btn" onclick="join()">Join</button>
+            </div>
+            <form id="create" class="input-group">
+                <input type="text" class="input-field" id="admin_name" placeholder="Enter player name" required>
+                <p class="space_30"></p>
+
+                <div class="input-label">
+                    <p class="hint-label">No of rounds</p>
+                </div>
+                <div class="number-input">
+                    <button type="button"
+                        onclick="this.parentNode.querySelector('input[type=number]').stepDown()"></button>
+                    <input class="quantity" min="1" max="10" id="no_of_rounds" value="3" type="number">
+                    <button type="button" onclick="this.parentNode.querySelector('input[type=number]').stepUp()"
+                        class="plus"></button>
+                </div>
+
+                <p class="space_30"></p>
+                <div class="input-label">
+                    <p class="hint-label">Time to guess (in seconds)</p>
+                </div>
+                <div class="number-input">
+                    <button type="button"
+                        onclick="this.parentNode.querySelector('input[type=number]').stepDown()"></button>
+                    <input class="quantity" min="10" max="180" id="time_to_guess" value="80" step="10" type="number">
+                    <button type="button" onclick="this.parentNode.querySelector('input[type=number]').stepUp()"
+                        class="plus"></button>
+                </div>
+
+                <p class="space_30"></p>
+                <button type="submit" class="submit-button">Create</button>
+            </form>
+            <form id="join" class="input-group">
+                <input type="text" id="player_name" class="input-field" placeholder="Enter player name" required>
+                <input type="text" id="room_name" class="input-field" placeholder="Enter private code" required>
+                <button type="submit" class="submit-button">Join</button>
+            </form>
+        </div>
+    </div>
+</body>
+<script>
+    var createForm = document.getElementById("create");
+    var joinForm = document.getElementById("join");
+    var btn = document.getElementById("btn");
+
+    function join() {
+        createForm.style.left = "-400px";
+        joinForm.style.left = "50px";
+        btn.style.left = "110px";
+    }
+
+    function create() {
+        createForm.style.left = "50px";
+        joinForm.style.left = "450px";
+        btn.style.left = "0px";
+    }
+
+    $('#join').submit(function (e) {
+        console.log('join');
+        e.preventDefault();
+        var postData = {
+            playerName: $('#player_name').val(),
+            roomName: $('#room_name').val(),
+        };
+        if (typeof (sessionStorage) != "undefined") {
+            sessionStorage.room = JSON.stringify(postData);
+        }
+        $.ajax({
+            url: "/joinRoom",
+            type: "POST",
+            dataType: "json",
+            data: postData,
+            success: function (data) {
+                console.log(data);
+                var url = "/board";
+                window.location = url;
+            },
+            fail: function (xhr, textStatus, errorThrown) {
+                console.log('failed');
+            }
+        });
+    });
+
+    $('#create').submit(function (e) {
+        e.preventDefault();
+        var postData = {
+            playerName: $('#admin_name').val(),
+            noOfRounds: $('#no_of_rounds').val(),
+            timeToGuess: $('#time_to_guess').val()
+        };
+        console.log(postData);
+        console.log(JSON.stringify(postData));
+
+        $.ajax({
+            url: "/createRoom",
+            type: "POST",
+            dataType: "json",
+            data: postData,
+            success: function (data) {
+                console.log(data);
+                if (typeof (sessionStorage) != "undefined") {
+                    sessionStorage.room = JSON.stringify(data);
+                }
+                var url = "/board";
+                window.location = url;
+            }
+        });
+    });
+</script>
+
+</html>

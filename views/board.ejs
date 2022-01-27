@@ -1,0 +1,468 @@
+<html>
+
+<head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-76017195-3"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'UA-76017195-3');
+    </script>
+
+    <title>Play Pictionary</title>
+    <link rel="stylesheet" type="text/css" href="../css/board.css">
+    <link rel="stylesheet" type="text/css" href="../css/tooltip.css">
+    <link href='https://fonts.googleapis.com/css?family=Orbitron' rel='stylesheet'>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="../js/ejs.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+
+    <link rel="stylesheet" href="../plugins/color-picker/colorPick.css">
+    <script src="../plugins/color-picker/colorPick.js"></script>
+</head>
+
+<body>
+    <div class="background">
+        <div class="palette-column">
+            <div class="colorPickSelector"></div>
+            <div class="brush-size-div"><i class="fa fa-circle" id="brush-size"></i>
+                <div class="brush-size-container">
+                    <div class="brush-size-tile" id="brush-size-small"><i class="fa fa-circle"></i></div>
+                    <div class="brush-size-tile" id="brush-size-medium"><i class="fa fa-circle"></i></div>
+                    <div class="brush-size-tile" id="brush-size-large"><i class="fa fa-circle"></i></div>
+                </div>
+            </div>
+            <div class="brush-size-div"><i class="fa fa-eraser" id="erase-button"></i></div>
+            <div class="brush-size-div"><i class="fa fa-trash" id="delete-button"></i></div>
+        </div>
+        <div class="canvas-column">
+            <div id="overlay" class="overlay">
+                <div id="room-name-div-start">
+                    <p id="room-name-start">Private code: test</p>
+                </div>
+                <div>
+                    <button id="play-button">Play</button>
+                </div>
+            </div>
+            <div id="round-scoreboard" class="score-board-overlay" style="display: none;">
+                <div class="score-board-content">
+                    <div class="score-title">
+                        <p class="round-info">Scoreboard</p>
+                    </div>
+                    <div class="score-table">
+                        <table class="list score" id="round-scoreboard-table">
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div id="game-scoreboard" class="overlay" style="display: none;">
+                <div class="score-board-content">
+                    <div class="score-title">
+                        <p class="round-info">Overall Scoreboard</p>
+                    </div>
+                    <div class="score-table">
+                        <table class="list score" id="overall-scoreboard-table">
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="status-bar">
+                <div class="round-info">
+                    <p id="round-info">Round n of n</p>
+                </div>
+                <div class="choosen-word">
+                    <p id="choosen-word">_ _ _ _</p>
+                </div>
+                <div class="timer">
+                    <p id="timer">00:00</p>
+                </div>
+            </div>
+            <div>
+                <canvas id="myCanvas" width="600px" height="550px" class="canvas">
+            </div>
+        </div>
+        <div class=" player-column">
+            <div class="player-section">
+                <div id="room-name-div">
+                    <p id="room-name" class="round-info">Room: test</p>
+                </div>
+                <table class="list players" id="players">
+                    <%players.map( player => {%>
+                    <tr>
+                        <td><%= player.playerName %></td>
+                    </tr>
+                    <%})%>
+                </table>
+            </div>
+            <div class="chat-section">
+                <div class="messages-section" id="messages-section">
+                    <table class="messages" id="messages">
+                    </table>
+                    <div class="message-section">
+                        <form id="message-form" class="message-form" action="">
+                            <input class="message-form-input" placeholder="Type your guess here!" id="m"
+                                autocomplete="off" />
+                            <button class="message-form-button">Send</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+    const socket = io.connect('https://play-pictionary.herokuapp.com/');
+    // const socket = io.connect('http://localhost:3300');
+    let roomData;
+    var color = "#000";
+
+    $(document).ready(function () {
+        init();
+        joinRoom();
+        getPlayers();
+    });
+
+    $('#play-button').click(function () {
+        console.log('button click');
+        $('#overlay').css("display", "none");
+        startGame();
+    });
+
+    $('#message-form').submit(function (e) {
+        console.log('send message');
+        e.preventDefault(); // prevents page reloading
+
+        var jsonUserData = JSON.parse(sessionStorage.room);
+        var playerData = { playerName: jsonUserData.playerName, roomName: jsonUserData.roomName };
+        var data = { message: $('#m').val(), playerData: playerData };
+
+        socket.emit('message', data);
+        $('#m').val('');
+        return false;
+    });
+
+    $('#delete-button').click(function () {
+        clearBoard();
+        socket.emit('clear', roomData.roomName);
+    });
+
+    $('#erase-button').click(function () {
+        color = '#fff';
+        ctx.strokeStyle = color;
+    })
+
+    $('#brush-size-small').click(function () {
+        $('#brush-size').css('font-size', '10px')
+        socket.emit('brush-size', { roomName: roomData.roomName, brushSize: 1 });
+        setBrushSize(1);
+    });
+
+    $('#brush-size-medium').click(function () {
+        $('#brush-size').css('font-size', '20px')
+        socket.emit('brush-size', { roomName: roomData.roomName, brushSize: 4 });
+        setBrushSize(4);
+    });
+
+    $('#brush-size-large').click(function () {
+        $('#brush-size').css('font-size', '30px')
+        socket.emit('brush-size', { roomName: roomData.roomName, brushSize: 8 });
+        setBrushSize(8);
+    });
+
+    function initializeColorPicker() {
+        $(".colorPickSelector").colorPick({
+            'initialColor': '#000',
+            'allowRecent': true,
+            'recentMax': 5,
+            'allowCustomColor': true,
+            'palette': ["#1abc9c", "#16a085", "#2ecc71", "#27ae60", "#3498db", "#2980b9", "#9b59b6", "#8e44ad", "#34495e", "#2c3e50", "#f1c40f", "#f39c12", "#e67e22", "#d35400", "#e74c3c", "#c0392b", "#ecf0f1", "#bdc3c7", "#95a5a6", "#7f8c8d"],
+            'onColorSelected': function () {
+                this.element.css({ 'backgroundColor': this.color, 'color': this.color });
+                color = this.color;
+                ctx.strokeStyle = color;
+            }
+        });
+    }
+
+    var ctx;
+    var $canvas;
+    function init() {
+        if (typeof (sessionStorage) != "undefined") {
+            roomData = JSON.parse(sessionStorage.room);
+            if (roomData.isAdmin === true) {
+                $('#overlay').css("display", "block");
+            } else {
+                $('#overlay').css("display", "none");
+            }
+        }
+        $('#room-name-start').text('Private code: ' + roomData.roomName);
+
+        $canvas = $("#myCanvas");
+        ctx = $canvas[0].getContext('2d');
+
+        var canvasOffset = $canvas.offset();
+        var leftOffset = canvasOffset.left;
+        var topOffset = canvasOffset.top;
+
+        var drag = false;
+        var events = [];
+        $canvas.on('mousemove', function (e) {
+            if (drag) {
+                events.push({ x: e.clientX, y: e.clientY, type: e.type });
+                draw(e.clientX, e.clientY, e.type);
+                // sendEventToServer(e);
+            }
+        });
+
+        $canvas.on('mousedown', function (e) {
+            drag = true;
+            events = [];
+            events.push({ x: e.clientX, y: e.clientY, type: e.type });
+            draw(e.clientX, e.clientY, e.type);
+            // sendEventToServer(e);
+        });
+
+        $canvas.on('mouseup', function (e) {
+            drag = false;
+            events.push({ x: e.clientX, y: e.clientY, type: e.type });
+            draw(e.clientX, e.clientY, e.type);
+            sendEventToServer(events);
+        });
+        initializeColorPicker();
+    };
+
+    async function sendEventToServer(_events) {
+        var jsonUserData = JSON.parse(sessionStorage.room);
+        var drawingData = { events: _events, color: color };
+        var userData = { playerName: jsonUserData.playerName, roomName: jsonUserData.roomName };
+        var data = { drawingData: drawingData, userData: userData };
+        console.log(_events);
+        emitData(data);
+    }
+
+    async function emitData(data) {
+        socket.emit('draw', data);
+    }
+
+    function joinRoom() {
+        if (typeof (sessionStorage) != "undefined") {
+            socket.emit('join', sessionStorage.room);
+        }
+    }
+
+    function getPlayers() {
+        if (typeof (sessionStorage) != "undefined") {
+            var jsonUserData = JSON.parse(sessionStorage.room);
+            let roomName = jsonUserData.roomName;
+            $.ajax({
+                url: "/getPlayers",
+                type: "GET",
+                data: { roomName: roomName },
+                success: function (data) {
+                    let players = JSON.parse(data);
+                    let html = ejs.render(`
+                        <? players.forEach(player => {?>
+                        <tr>
+                            <? if (player.active === true) { ?>
+                                <td style="width:5%"><i class="fa fa-pencil"></i></td>                        
+                            <? } else {?>
+                                <td style="width:0%"></td>                        
+                                <? } ?>
+                            <td style="width:95%"><?= player.playerName ?> (Points: <?= player.score ?>)</td>
+                        </tr>
+                        <?}) ?>`, { players: players },
+                        { delimiter: '?' });
+                    $('#players').html(html);
+                }
+            });
+        }
+    }
+
+    function startGame() {
+        socket.emit('play', roomData.roomName);
+    }
+
+    function draw(x, y, type) {
+        var canvasOffset = $canvas.offset();
+        var leftOffset = canvasOffset.left;
+        var topOffset = canvasOffset.top;
+        x = x - leftOffset;
+        y = y - topOffset;
+
+        if (type == "mousedown") {
+            ctx.beginPath()
+            ctx.moveTo(x, y)
+        }
+        else if (type == "mousemove") {
+            ctx.lineTo(x, y)
+            ctx.stroke()
+        }
+        else if (type == "mouseup") {
+            ctx.closePath()
+        }
+    };
+
+    var timerInterval;
+    function startTimer(duration, display) {
+        var timer = duration, minutes, seconds;
+        timerInterval = setInterval(function () {
+            minutes = parseInt(timer / 60, 10);
+            seconds = parseInt(timer % 60, 10);
+
+            minutes = minutes < 10 ? "0" + minutes : minutes;
+            seconds = seconds < 10 ? "0" + seconds : seconds;
+
+            display.textContent = minutes + ":" + seconds;
+
+            if (--timer < 0) {
+                timer = duration;
+            }
+        }, 1000);
+    }
+
+    function stopTimer() {
+        var display = document.querySelector('#timer');
+        display.textContent = "00:00";
+        clearInterval(timerInterval);
+    }
+
+    var isCurrentUserActive = false;
+    function updateRoundInfo(roundData) {
+
+        let activePlayer = roundData.round.players.find(player => player.active === true);
+        isCurrentUserActive = (activePlayer.playerName == roomData.playerName);
+        $('#myCanvas').css("pointer-events", (isCurrentUserActive === true ? "auto" : "none"));
+
+        let html = ejs.render(`
+                        Round <?= roundNo ?> of <?= noOfRounds ?>`,
+            { roundNo: roundData.round.roundNo, noOfRounds: roundData.noOfRounds },
+            { delimiter: '?' });
+        $('#round-info').html(html);
+
+        let word = roundData.round.word.replace(/[^ ]/gi, '*');
+        if (isCurrentUserActive === true) {
+            $('#choosen-word').text(roundData.round.word);
+        } else {
+            $('#choosen-word').text(word);
+        }
+    }
+
+    function displayRoundScoreboard(round) {
+        let scores = round.scores;
+        let html = ejs.render(`
+                    <colgroup>
+                            <col span="1" style="width: 75%;">
+                            <col span="1" style="width: 25%;">
+                    </colgroup>                    
+                    <? for (var playerName in scores) {?>
+                    <tr>
+                        <td><?= playerName ?></td>
+                        <td><?= scores[playerName] ?></td>
+                    </tr>
+                    <?} ?>`,
+            { scores: scores },
+            { delimiter: '?' });
+        $('#round-scoreboard-table').html(html);
+        $('#round-scoreboard').css("display", "block");
+    }
+
+    function displayOverallScoreboard(_players) {
+        hideRoundScoreboard();
+        let html = ejs.render(`
+                    <colgroup>
+                            <col span="1" style="width: 75%;">
+                            <col span="1" style="width: 25%;">
+                    </colgroup>                    
+                    <? players.forEach(player => {?>
+                    <tr>
+                        <td><?= player.playerName ?></td>
+                        <td><?= player.score ?></td>
+                    </tr>
+                    <?}) ?>`,
+            { players: _players },
+            { delimiter: '?' });
+        $('#overall-scoreboard-table').html(html);
+        $('#game-scoreboard').css("display", "block");
+    }
+
+    function hideRoundScoreboard() {
+        $('#round-scoreboard').css("display", "none");
+    }
+
+    function setBrushSize(size) {
+        ctx.lineWidth = size;
+        console.log('setting brush size to ' + size);
+    }
+
+    function clearBoard() {
+        ctx.clearRect(0, 0, $canvas[0].width, $canvas[0].height);
+    }
+
+    socket.on('draw', (drawingData) => {
+        if (isCurrentUserActive === true) {
+            return;
+        }
+        color = drawingData.color;
+        ctx.strokeStyle = color;
+        drawingData.events.forEach(event => {
+            draw(event.x, event.y, event.type);
+        });
+    });
+
+    socket.on('clear', (event) => {
+        clearBoard();
+    });
+
+    socket.on('brush-size', (brushSize) => {
+        setBrushSize(brushSize);
+    })
+
+    socket.on('connectToRoom', (message) => {
+        $('#room-name').text('Room: ' + roomData.roomName);
+        getPlayers();
+    });
+
+    socket.on('event', (message) => {
+        let markup = '<tr><td>' + message + '</td></tr>';
+        $('#messages').append(markup)
+        document.getElementById('messages-section').scrollTop = 10000;
+
+        getPlayers();
+    });
+
+    socket.on('roundStart', (round) => {
+        var display = document.querySelector('#timer');
+        startTimer(round.round.timeToGuess, display);
+        updateRoundInfo(round);
+        hideRoundScoreboard();
+        getPlayers();
+        clearBoard();
+    });
+
+    socket.on('roundEnd', (round) => {
+        stopTimer();
+        displayRoundScoreboard(round);
+    });
+
+    socket.on('gameEnd', (players) => {
+        stopTimer();
+        console.log('game ended');
+        displayOverallScoreboard(players);
+    });
+
+    socket.on('message', (messageData) => {
+        let messageJson = JSON.parse(messageData);
+
+        let markup = '<tr><td>' +
+            messageJson.player.playerName + ": " + messageJson.message +
+            '</td></tr>';
+        $('#messages').append(markup)
+        document.getElementById('messages-section').scrollTop = 10000;
+    });
+</script>
+
+</html>

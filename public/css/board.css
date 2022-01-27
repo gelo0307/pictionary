@@ -1,0 +1,317 @@
+.background {
+    height: 100%;
+    width: 100%;
+    background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(../assets/images/board-bg.jpg);
+    position: absolute;
+}
+
+.canvas {
+    background: white;
+    width: "100%";
+    height: "100%";
+    border: 1px solid #d3d3d3;
+    pointer-events: none;
+}
+
+.palette-column {
+    float: left;
+    width: 50px;
+    height: 500px;
+    padding: 10px;
+    margin-top: 75px;
+    margin-left: 10px;
+    background: white;
+}
+
+.canvas-column {
+    float: left;
+    width: 600px;
+    height: 500px;
+    padding: 10px;
+}
+
+.player-column {
+    float: left;
+    width: 300px;
+    height: 600px;
+    margin: 10px 0;
+}
+
+.player-section {
+    float: left;
+    width: 100%;
+    height: 50%;
+    border: 1px solid #000;
+    margin-bottom: 5px;
+    background: white;
+}
+
+.chat-section {
+    float: left;
+    width: 100%;
+    height: 50%;
+    position: relative;
+    border: 1px solid #000;
+    background: white;
+}
+
+.messages-section {
+    width: 100%;
+    height: 85%;
+    overflow: auto;
+}
+
+.list {
+    width: 100%;
+    font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
+    background: white;
+}
+
+.list td, .list th {
+    border-bottom: 1px solid #ddd;
+    padding: 8px;
+}
+
+.list tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+.list tr:hover {
+    background-color: #ddd;
+}
+
+.list th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
+    background-color: #4CAF50;
+    color: white;
+}
+
+.message-section {
+    position: absolute;
+    bottom: 10px;
+    height: 10%;
+}
+
+.message-form {
+    background: #000;
+    padding: 3px;
+    border-radius: 30px;
+    overflow: hidden;
+}
+
+.message-form-input {
+    border: 0;
+    padding: 10px;
+    width: 240px;
+    border-radius: 30px 0 0 30px;
+    font-family: "Comic Sans MS", cursive, sans-serif;
+}
+
+.message-form-button {
+    width: 50px;
+    background: rgb(130, 224, 255);
+    border: none;
+    padding: 10px;
+    border-radius: 0 30px 30px 0;
+    font-family: "Comic Sans MS", cursive, sans-serif;
+    cursor: pointer;
+    background: linear-gradient(to right, #ff105f, #ffad06);
+}
+
+#messages {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    font-family: "Comic Sans MS", cursive, sans-serif;
+    width: 100%;
+}
+
+#messages td {
+    padding: 5px 10px;
+}
+
+#messages tr:nth-child(odd) {
+    background: #eee;
+}
+
+.overlay {
+    position: fixed;
+    display: block;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 2;
+    text-align: center;
+    padding: 300px 0;
+}
+
+#play-button {
+    width: 250px;
+    height: 75px;
+    background: rgb(130, 224, 255);
+    border: none;
+    border-radius: 30px;
+    font-family: "Comic Sans MS", cursive, sans-serif;
+    font-size: 50px;
+    cursor: pointer;
+    background: linear-gradient(to right, #ff105f, #ffad06);
+    transition: all linear .1s;
+}
+
+#play-button:hover {
+    transform: scale(1.1);
+}
+
+.status-bar {
+    margin: auto;
+    height: 35px;
+    background: linear-gradient(to right, #ff105f, #ffad06);
+    padding: 0px 10px 15px 10px;
+    margin-bottom: 10px;
+    width: 95%;
+}
+
+#room-name-div {
+    margin: auto;
+    height: 35px;
+    background: linear-gradient(to right, #ff105f, #ffad06);
+}
+
+#room-name {
+    margin: auto;
+    padding: 5px;
+}
+
+.round-info {
+    float: left;
+    font-family: "Comic Sans MS", cursive, sans-serif;
+    color: white;
+}
+
+
+.choosen-word {
+    text-align: center;
+    float: left;
+    font-family: "Comic Sans MS", cursive, sans-serif;
+    color: white;
+    margin-left: 150px;
+}
+
+@font-face {
+    font-family: Timer;
+    src: url('../assets/fonts/digital-7.regular.ttf');
+}
+
+.timer {
+    width: 100px;
+    float: right;
+    font-family: 'Timer';
+    font-size: 22px;
+}
+
+.score-board-overlay {
+    position: fixed;
+    display: block;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 2;
+    text-align: center;
+    padding: 300px 0;
+}
+
+.score-board-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 0px 20px 20px 20px;
+    border: 1px solid #888;
+    width: 400px;
+}
+
+.score {
+    width: 75%;
+    margin: auto;
+}
+
+.score td {
+    background: transparent;
+}
+
+.score-title {
+    display: inline-block;
+    width: 100%;
+}
+
+.score-title p {
+    color: black;
+}
+
+.score-table {
+    background: white;
+    width: 100%;
+    position: relative;
+    display: inline-block;
+}
+
+.colorPickSelector {
+    border-radius: 5px;
+    width: 36px;
+    height: 36px;
+    padding: 7px;
+    cursor: pointer;
+    -webkit-transition: all linear .2s;
+    -moz-transition: all linear .2s;
+    -ms-transition: all linear .2s;
+    -o-transition: all linear .2s;
+    transition: all linear .2s;
+}
+
+.colorPickSelector:hover {
+    transform: scale(1.1);
+}
+
+#delete-button {
+    margin-top: 25px;
+    padding-left: 7px;
+    font-size: 40px;
+}
+
+#erase-button {
+    margin-top: 25px;
+    padding-left: 7px;
+    font-size: 40px;
+}
+
+#brush-size {
+    margin-top: 25px;
+    font-size: 20px;
+}
+
+.fa-trash:hover {
+    transition: all linear .1s;
+    transform: scale(1.5);
+}
+
+.fa-eraser:hover {
+    transition: all linear .1s;
+    transform: scale(1.5);
+}
+
+#room-name-div-start {
+    font-family: "Comic Sans MS", cursive, sans-serif;
+    color: white;
+}
